@@ -31,8 +31,10 @@ import java.util.Optional;
 @Service
 public class TokenService {
     SecureRandom secureRandom = new SecureRandom();
-    long access_expire = 3;
-    long refresh_expire = 36000L;
+    @Value("${jwt.access-token.expiration}")
+    long access_expire;
+    @Value("${jwt.refresh-token.expiration}")
+    long refresh_expire;
     RSAPrivateKey privateKey;
     RSAPublicKey publicKey;
     TokenRepository tokenRepository;
@@ -58,6 +60,9 @@ public class TokenService {
         this.memberRepository = memberRepository;
         this.jwtAuthenticationConverter = jwtAuthenticationConverter;
         this.registeredMember = registeredMember;
+        System.out.println("--------------access_expire-------"+access_expire);
+        System.out.println("--------------refresh_expire------"+refresh_expire);
+
     }
     public void revokeAllUserTokens(Member member) {
         var validUserTokens = tokenRepository.findAllValidTokenByMember(member.getId());
@@ -78,7 +83,6 @@ public class TokenService {
         return NimbusJwtDecoder.withPublicKey(this.publicKey).build();
     }
     public Member getMember(Token token) throws Exception {
-
         if (token == null) throw new Exception();
         String cleanedToken = token.getTokenValue();
         Jwt jwt = getJwt(cleanedToken);
@@ -127,18 +131,18 @@ public class TokenService {
                 .build();
     }
     public JwtClaimsSet getRefreshTokenClaims(String memberId){
+
         String jti = getNewJTI();
         return JwtClaimsSet.builder()
                 .id(jti)
                 .issuer(ISSIdentity.KCHAT.toString())
                 .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plusSeconds(refresh_expire))
+                .expiresAt(Instant.now().plusSeconds(refresh_expire*60))
                 .subject(memberId)
                 .claim("scope", "ROLE_USER")
                 .build();
     }
     public TokensResponse getTokens(Member member){
-//        revokeAllUserTokens(member);
         String memberId = Long.toString(member.getId());
 
         // generate access token
@@ -174,11 +178,4 @@ public class TokenService {
         return Optional.of(authenticationToken);
     }
 
-//    public Token validate(String tokenValue){
-//        Token token = findByToken(tokenValue).orElseThrow();
-//        String foundTokenValue = token.getTokenValue();
-//        Jwt decodedToken = selfJwtDecoder.decode(foundTokenValue);
-//        selfJwtDecoder.
-//        return null;
-//    }
 }
