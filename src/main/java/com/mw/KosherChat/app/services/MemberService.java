@@ -7,25 +7,23 @@ import com.mw.KosherChat.app.repositories.MemberRoomRepository;
 import com.mw.KosherChat.model.ISSIdentity;
 import com.mw.KosherChat.model.Oauth2CustomUser;
 import com.mw.KosherChat.services.Oauth2CustomUserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.jwt.JwtException;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class MemberService {
 
-    private MemberRepository memberRepository;
-    private Oauth2CustomUserService oauth2Service;
-    private MemberRoomRepository memberRoomRepository;
-    private RegisteredMember registeredMember;
+    private final MemberRepository memberRepository;
+    private final Oauth2CustomUserService oauth2Service;
+    private final MemberRoomRepository memberRoomRepository;
+    private final RegisteredMember registeredMember;
 
     @Autowired
     public MemberService(
@@ -59,15 +57,15 @@ public class MemberService {
         return member;
     }
 
-    public Member updateMember(Member memberUpdates, Authentication authentication) throws Exception{
+    public Member updateMember(Member memberUpdates, Authentication authentication) throws Exception {
         String username = memberUpdates.getUsername();
         Member member = memberRepository.findByUsername(username).orElseThrow();
         String updates_given_name = memberUpdates.getGiven_name();
-        if(updates_given_name!= null && updates_given_name.trim().length()>0) {
+        if (updates_given_name != null && updates_given_name.trim().length() > 0) {
             member.setGiven_name(updates_given_name.trim());
         }
         String updates_family_name = memberUpdates.getFamily_name();
-        if(updates_family_name!= null && updates_family_name.trim().length()>0) {
+        if (updates_family_name != null && updates_family_name.trim().length() > 0) {
             member.setFamily_name(updates_family_name);
         }
 
@@ -82,7 +80,7 @@ public class MemberService {
         return memberRepository.findAll();
     }
 
-    public Member createMember(Member member){
+    public Member createMember(Member member) {
         return memberRepository.save(member);
     }
 
@@ -97,8 +95,8 @@ public class MemberService {
                 .map(memberRoom -> memberRoom.getMember())
                 .distinct()
                 .collect(Collectors.toMap(
-                        Member::getId,
-                        MemberDTO::from
+                                Member::getId,
+                                MemberDTO::from
                         )
                 );
 
@@ -107,20 +105,16 @@ public class MemberService {
 
     public String getSub(Member member) {
         ISSIdentity iss = member.getIss();
-        switch (iss) {
-            case GOOGLE -> {
-                String email = member.getUsername();
-                Optional<Oauth2CustomUser> optional = oauth2Service.findByEmail(email);
-                if(optional.isEmpty()) return null;
-                return optional.get().getSub();
-            }
-            default -> {
-                return member.getId().toString();
-            }
+        if (Objects.requireNonNull(iss) == ISSIdentity.GOOGLE) {
+            String email = member.getUsername();
+            Optional<Oauth2CustomUser> optional = oauth2Service.findByEmail(email);
+            if (optional.isEmpty()) return null;
+            return optional.get().getSub();
         }
+        return member.getId().toString();
     }
 
-    public Member saveMember (Member member) {
+    public Member saveMember(Member member) {
         return memberRepository.save(member);
     }
 }

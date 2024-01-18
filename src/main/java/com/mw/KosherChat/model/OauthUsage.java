@@ -20,12 +20,12 @@ public class OauthUsage {
     Long id;
     @NotNull
     @ManyToOne
-    @JoinColumn(name="oauth2CustomUser_id")
+    @JoinColumn(name = "oauth2CustomUser_id")
     Oauth2CustomUser oauth2CustomUser;
     LocalDateTime dateTime;
 
     @Builder
-    public static OauthUsage from(Oauth2CustomUser oauth2CustomUser){
+    public static OauthUsage from(Oauth2CustomUser oauth2CustomUser) {
         return OauthUsage.builder()
                 .dateTime(LocalDateTime.now())
                 .oauth2CustomUser(oauth2CustomUser)

@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TokensResponse {
-    String access_token;
-    String refresh_token;
+    public String access_token;
+    public String refresh_token;
 
 
 }

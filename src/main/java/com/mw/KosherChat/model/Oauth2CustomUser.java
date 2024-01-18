@@ -32,20 +32,20 @@ public class Oauth2CustomUser {
     String picture;
 
     @Builder
-    public static Oauth2CustomUser from(Map<String, Object> credentials){
+    public static Oauth2CustomUser from(Map<String, Object> credentials) {
         return Oauth2CustomUser.builder()
-                .iss((String)credentials.get("iss"))
-                .sub((String)credentials.get("sub"))
-                .given_name((String)credentials.get("given_name"))
-                .family_name((String)credentials.get("family_name"))
-                .name((String)credentials.get("name"))
-                .email((String)credentials.get("email"))
-                .picture((String)credentials.get("picture"))
+                .iss((String) credentials.get("iss"))
+                .sub((String) credentials.get("sub"))
+                .given_name((String) credentials.get("given_name"))
+                .family_name((String) credentials.get("family_name"))
+                .name((String) credentials.get("name"))
+                .email((String) credentials.get("email"))
+                .picture((String) credentials.get("picture"))
                 .build();
     }
 
     @Builder
-    public static Oauth2CustomUser from(JwtAuthenticationToken jwtAuthenticationToken){
+    public static Oauth2CustomUser from(JwtAuthenticationToken jwtAuthenticationToken) {
         Jwt credentials = (Jwt) jwtAuthenticationToken.getCredentials();
         Map<String, Object> claims = credentials.getClaims();
         Oauth2CustomUser oauth2User = Oauth2CustomUser.from(claims);

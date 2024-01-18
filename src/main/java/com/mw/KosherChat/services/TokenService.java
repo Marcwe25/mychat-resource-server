@@ -15,6 +15,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -60,10 +61,11 @@ public class TokenService {
         this.memberRepository = memberRepository;
         this.jwtAuthenticationConverter = jwtAuthenticationConverter;
         this.registeredMember = registeredMember;
-        System.out.println("--------------access_expire-------"+access_expire);
-        System.out.println("--------------refresh_expire------"+refresh_expire);
+        System.out.println("--------------access_expire-------" + access_expire);
+        System.out.println("--------------refresh_expire------" + refresh_expire);
 
     }
+
     public void revokeAllUserTokens(Member member) {
         var validUserTokens = tokenRepository.findAllValidTokenByMember(member.getId());
         if (validUserTokens.isEmpty())
@@ -74,14 +76,17 @@ public class TokenService {
         });
         tokenRepository.saveAll(validUserTokens);
     }
-    public JwtEncoder getSelfJwtEncoder(){
+
+    public JwtEncoder getSelfJwtEncoder() {
         JWK jwk = new RSAKey.Builder(this.publicKey).privateKey(this.privateKey).build();
         JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
         return new NimbusJwtEncoder(jwks);
     }
-    public JwtDecoder getSelfJwtDecoder(){
+
+    public JwtDecoder getSelfJwtDecoder() {
         return NimbusJwtDecoder.withPublicKey(this.publicKey).build();
     }
+
     public Member getMember(Token token) throws Exception {
         if (token == null) throw new Exception();
         String cleanedToken = token.getTokenValue();
@@ -90,7 +95,7 @@ public class TokenService {
         //validation
         String id = jwt.getId();
         Token referenceById = tokenRepository.getReferenceById(id);
-        if(referenceById==null) throw new JwtException("token exception");
+        if (referenceById == null) throw new JwtException("token exception");
         if (jwt.getExpiresAt().isBefore(Instant.now())) throw new JwtException("token expired");
         if (token.revoked) throw new JwtException("token revoked");
         String token_userId = jwt.getSubject();
@@ -99,27 +104,31 @@ public class TokenService {
         Member member = registeredMember.findRegisteredMember(token_userId, ISSIdentity.valueOf(iss));
         return member;
     }
+
     public Jwt getJwt(String token) {
-        String cleanedToken = token.replace("Bearer ","");
+        String cleanedToken = token.replace("Bearer ", "");
         Jwt jwt = selfJwtDecoder.decode(cleanedToken);
         Map<String, Object> claims = jwt.getClaims();
         return jwt;
     }
-    public Optional<Token> findByToken(String token){
+
+    public Optional<Token> findByToken(String token) {
         return tokenRepository.findByTokenValue(token);
-    };
-    public String getNewJTI(){
-        while(true){
+    }
+
+    public String getNewJTI() {
+        while (true) {
             byte[] jtiBytes = new byte[64];
             secureRandom.nextBytes(jtiBytes);
             String jti = Base64.getUrlEncoder().withoutPadding().encodeToString(jtiBytes);
             boolean exist = tokenRepository.existsById(jti);
-            if(!exist){
+            if (!exist) {
                 return jti;
             }
         }
     }
-    public JwtClaimsSet getAccessTokenClaims(String memberId){
+
+    public JwtClaimsSet getAccessTokenClaims(String memberId) {
         String jti = getNewJTI();
         return JwtClaimsSet.builder()
                 .id(jti)
@@ -130,19 +139,21 @@ public class TokenService {
                 .claim("scope", "ROLE_USER")
                 .build();
     }
-    public JwtClaimsSet getRefreshTokenClaims(String memberId){
+
+    public JwtClaimsSet getRefreshTokenClaims(String memberId) {
 
         String jti = getNewJTI();
         return JwtClaimsSet.builder()
                 .id(jti)
                 .issuer(ISSIdentity.KCHAT.toString())
                 .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plusSeconds(refresh_expire*60))
+                .expiresAt(Instant.now().plusSeconds(refresh_expire * 60))
                 .subject(memberId)
                 .claim("scope", "ROLE_USER")
                 .build();
     }
-    public TokensResponse getTokens(Member member){
+
+    public TokensResponse getTokens(Member member) {
         String memberId = Long.toString(member.getId());
 
         // generate access token
@@ -159,23 +170,38 @@ public class TokenService {
                 .refresh_token(refreshToken.getTokenValue())
                 .build();
     }
-    public Jwt getJwt(JwtClaimsSet claims){
+
+    public Jwt getJwt(JwtClaimsSet claims) {
 
         Jwt jwt = this.selfJwtEncoder.encode(JwtEncoderParameters.from(claims));
         try {
-            Token token = Token.fromJwt(jwt);
+            Token token = Token.from(jwt);
             tokenRepository.save(token);
 
         } catch (Exception e) {
         }
         return jwt;
     }
-    public Optional<AbstractAuthenticationToken> getAbstractAuthenticationToken(String token){
+
+    public Optional<AbstractAuthenticationToken> getAbstractAuthenticationToken(String token) {
         Optional<Token> byToken = this.findByToken(token);
-        if(!byToken.isPresent()){return Optional.empty();}
+        if (!byToken.isPresent()) {
+            return Optional.empty();
+        }
         Jwt jwt = this.getJwt(byToken.get().getTokenValue());
         AbstractAuthenticationToken authenticationToken = jwtAuthenticationConverter.convert(jwt);
         return Optional.of(authenticationToken);
+    }
+
+    public ResponseCookie refreshTokenAsCookie(String refreshToken) {
+        return ResponseCookie
+                .from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .sameSite("Lax")
+                .secure(true)
+                .domain("wewehappy.com")
+                .maxAge(Math.toIntExact(60 * 60 * 24 * 7))
+                .build();
     }
 
 }

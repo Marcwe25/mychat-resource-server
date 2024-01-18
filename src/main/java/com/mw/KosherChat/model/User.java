@@ -19,86 +19,88 @@ import java.util.Collection;
 @Table(name = "_user")
 public class User implements UserDetails {
 
-  @Id
-  @GeneratedValue
-  private Long id;
-  @Column(unique=true)
-  private String email;
-  private String password;
+    @Id
+    @GeneratedValue
+    private Long id;
+    @Column(unique = true)
+    private String email;
+    private String password;
 
-  @Enumerated(EnumType.STRING)
-  private Role role;
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
-  @Override
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    return role.getAuthorities();
-  }
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return role.getAuthorities();
+    }
 
-  @Builder
-  public static User from(Oauth2CustomUser oauth2CustomUser){
-    return User.builder()
-            .email(oauth2CustomUser.getEmail())
-            .role(Role.USER)
-            .build();
-  }
-  @Builder
-  public static User from(RegisterRequest registerRequest){
-    return User.builder()
-            .email(registerRequest.getEmail())
-            .password(registerRequest.getPassword())
-            .role(Role.USER)
-            .build();
-  }
-  public Long getId() {
-    return id;
-  }
+    @Builder
+    public static User from(Oauth2CustomUser oauth2CustomUser) {
+        return User.builder()
+                .email(oauth2CustomUser.getEmail())
+                .role(Role.USER)
+                .build();
+    }
 
-  public void setId(Long id) {
-    this.id = id;
-  }
+    @Builder
+    public static User from(RegisterRequest registerRequest) {
+        return User.builder()
+                .email(registerRequest.getEmail())
+                .password(registerRequest.getPassword())
+                .role(Role.USER)
+                .build();
+    }
 
-  @Override
-  public String getPassword() {
-    return password;
-  }
+    public Long getId() {
+        return id;
+    }
 
-  @Override
-  public String getUsername() {
-    return email;
-  }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-  @Override
-  public boolean isAccountNonExpired() {
-    return true;
-  }
+    @Override
+    public String getPassword() {
+        return password;
+    }
 
-  @Override
-  public boolean isAccountNonLocked() {
-    return true;
-  }
+    @Override
+    public String getUsername() {
+        return email;
+    }
 
-  @Override
-  public boolean isCredentialsNonExpired() {
-    return true;
-  }
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
-  @Override
-  public boolean isEnabled() {
-    return true;
-  }
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 
-    User user = (User) o;
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 
-    return this.id != null && getId().equals(user.getId());
-  }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-  @Override
-  public int hashCode() {
-    return getClass().hashCode();
-  }
+        User user = (User) o;
+
+        return this.id != null && getId().equals(user.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

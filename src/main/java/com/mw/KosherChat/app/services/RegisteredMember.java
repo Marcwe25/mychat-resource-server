@@ -5,7 +5,6 @@ import com.mw.KosherChat.app.repositories.MemberRepository;
 import com.mw.KosherChat.model.ISSIdentity;
 import com.mw.KosherChat.model.Oauth2CustomUser;
 import com.mw.KosherChat.repository.Oauth2CustomUserRepository;
-import com.mw.KosherChat.services.Oauth2CustomUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
@@ -16,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class RegisteredMember {
 
-//    @Autowired
+    //    @Autowired
 //    MemberService memberService;
 //    @Autowired
 //    Oauth2CustomUserService oauth2CustomUserService;
@@ -37,24 +36,25 @@ public class RegisteredMember {
     public Member findRegisteredMember(JwtAuthenticationToken authenticationToken) throws Exception {
         String subject = authenticationToken.getToken().getSubject();
         ISSIdentity issuer = ISSIdentity.identityFor(authenticationToken.getToken().getClaimAsString("iss"));
-        return findRegisteredMember(subject,issuer);
+        return findRegisteredMember(subject, issuer);
     }
 
-    public Member findRegisteredMember(String subject,ISSIdentity issuer) {
+    public Member findRegisteredMember(String subject, ISSIdentity issuer) {
         switch (issuer) {
-            case KCHAT : {
+            case KCHAT: {
                 Long userid = Long.valueOf(subject);
                 Member memberById = memberRepository.findById(userid).orElseThrow();
                 return memberById;
 
             }
-            case GOOGLE : {
+            case GOOGLE: {
                 Oauth2CustomUser user = oauth2CustomUserRepository.findBySub(subject).orElseThrow();
                 String userEmail = user.getEmail();
                 Member member = memberRepository.findByUsername(userEmail).orElseThrow();
                 return member;
             }
-            default : throw new JwtException("could not locate user");
+            default:
+                throw new JwtException("could not locate user");
         }
     }
 }

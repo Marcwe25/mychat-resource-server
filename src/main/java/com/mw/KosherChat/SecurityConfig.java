@@ -1,46 +1,31 @@
 package com.mw.KosherChat;
 
 import com.mw.KosherChat.model.ISSIdentity;
-import com.mw.KosherChat.services.UserDetailsService;
 import com.nimbusds.jwt.JWTParser;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
-import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationManagerResolver;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.SupplierJwtDecoder;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
-import org.springframework.security.oauth2.server.resource.authentication.*;
-import org.springframework.security.oauth2.server.resource.introspection.OpaqueTokenIntrospector;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
-import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
-import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -49,7 +34,6 @@ import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @Configuration
 @EnableMethodSecurity
@@ -68,7 +52,8 @@ public class SecurityConfig {
         return (web) -> web.debug(webSecurityDebug);
     }
 
-    @Bean @Order(1)
+    @Bean
+    @Order(1)
     public SecurityFilterChain basicFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/v1/auth/**")
@@ -80,18 +65,19 @@ public class SecurityConfig {
 
     }
 
-    @Bean @Order(2)
+    @Bean
+    @Order(2)
     public SecurityFilterChain defaultFilterChain(HttpSecurity http) throws Exception {
 
         http
                 .cors(Customizer.withDefaults())
                 .csrf((csrf) -> csrf.disable())
                 .authorizeHttpRequests((authorize) ->
-                        authorize
+                                authorize
 //                                .requestMatchers("/api/v1/auth/**").permitAll()
-                                .requestMatchers("/chat-room-websocket/**").permitAll()
-                                .anyRequest().authenticated()
-                        )
+                                        .requestMatchers("/chat-room-websocket/**").permitAll()
+                                        .anyRequest().authenticated()
+                )
                 .oauth2ResourceServer((oauth2) -> oauth2
                         .authenticationManagerResolver(this.tokenAuthenticationManagerResolver())
                 )
@@ -104,33 +90,33 @@ public class SecurityConfig {
     }
 
 
-
     @Bean
     AuthenticationManagerResolver<HttpServletRequest> tokenAuthenticationManagerResolver2() {
-        return (request)->customAuthenticationManagerResolver(request);
+        return (request) -> customAuthenticationManagerResolver(request);
     }
 
     @Bean
     AuthenticationManagerResolver<HttpServletRequest> tokenAuthenticationManagerResolver() {
-        return (request)->{
-            Map<String,AuthenticationManager> authenticationManagerMap = new HashMap<>();
+        return (request) -> {
+            Map<String, AuthenticationManager> authenticationManagerMap = new HashMap<>();
             String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-            String token = authorizationHeader.replaceAll("^Bearer\\s+","");
+            String token = authorizationHeader.replaceAll("^Bearer\\s+", "");
             try {
                 String issuer = JWTParser.parse(token).getJWTClaimsSet().getIssuer();
-                if (issuer == null) {throw new RuntimeException();}
-                switch (issuer) {
-                    case "KCHAT" : return jwtSelf();
-                    default :
-                        authenticationManagerMap.computeIfAbsent(issuer,(iss)->{
-                            JwtDecoder supplierJwtDecoder = new SupplierJwtDecoder(() -> JwtDecoders.fromIssuerLocation(iss));
-                            JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(supplierJwtDecoder);
-                            jwtAuthenticationProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter());
-                            AuthenticationManager authenticationManager = new ProviderManager(jwtAuthenticationProvider);
-                            return  authenticationManager;
-                        });
-                        return authenticationManagerMap.get(issuer);
+                if (issuer == null) {
+                    throw new RuntimeException();
                 }
+                if (issuer.equals("KCHAT")) {
+                    return jwtSelf();
+                }
+                authenticationManagerMap.computeIfAbsent(issuer, (iss) -> {
+                    JwtDecoder supplierJwtDecoder = new SupplierJwtDecoder(() -> JwtDecoders.fromIssuerLocation(iss));
+                    JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(supplierJwtDecoder);
+                    jwtAuthenticationProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter());
+                    AuthenticationManager authenticationManager = new ProviderManager(jwtAuthenticationProvider);
+                    return authenticationManager;
+                });
+                return authenticationManagerMap.get(issuer);
 
             } catch (ParseException e) {
                 throw new RuntimeException(e);
@@ -139,29 +125,31 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager jwtSelf(){
+    public AuthenticationManager jwtSelf() {
         return new ProviderManager(new JwtAuthenticationProvider(NimbusJwtDecoder.withPublicKey(this.key).build()));
     }
 
-    public AuthenticationManager customAuthenticationManagerResolver(HttpServletRequest request){
+    public AuthenticationManager customAuthenticationManagerResolver(HttpServletRequest request) {
         String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        String token = authorizationHeader.replaceAll("^Bearer\\s+","");
+        String token = authorizationHeader.replaceAll("^Bearer\\s+", "");
         try {
-                String issuer = JWTParser.parse(token).getJWTClaimsSet().getIssuer();
-                if (issuer != null) {
-                    if(issuer.equals(ISSIdentity.KCHAT.toString())) {return jwtSelf();}
-                    else{
-                        JwtDecoder supplierJwtDecoder = new SupplierJwtDecoder(() -> JwtDecoders.fromIssuerLocation(issuer));
-                        JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(supplierJwtDecoder);
-                        jwtAuthenticationProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter());
-                        AuthenticationManager authenticationManager = new ProviderManager(jwtAuthenticationProvider);
-                        return  authenticationManager;
+            String issuer = JWTParser.parse(token).getJWTClaimsSet().getIssuer();
+            if (issuer != null) {
+                if (issuer.equals(ISSIdentity.KCHAT.toString())) {
+                    return jwtSelf();
+                } else {
+                    JwtDecoder supplierJwtDecoder = new SupplierJwtDecoder(() -> JwtDecoders.fromIssuerLocation(issuer));
+                    JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(supplierJwtDecoder);
+                    jwtAuthenticationProvider.setJwtAuthenticationConverter(jwtAuthenticationConverter());
+                    AuthenticationManager authenticationManager = new ProviderManager(jwtAuthenticationProvider);
+                    return authenticationManager;
 
-                    }
                 }
-            } catch (Exception var4) {throw new InvalidBearerTokenException(var4.getMessage(), var4);
             }
-            throw new InvalidBearerTokenException("Missing issuer");
+        } catch (Exception var4) {
+            throw new InvalidBearerTokenException(var4.getMessage(), var4);
+        }
+        throw new InvalidBearerTokenException("Missing issuer");
     }
 
     @Bean

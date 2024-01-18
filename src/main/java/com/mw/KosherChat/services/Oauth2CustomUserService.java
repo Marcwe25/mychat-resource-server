@@ -11,6 +11,8 @@ import com.mw.KosherChat.repository.OauthUsageRepository;
 import com.mw.KosherChat.views.Oauth2AuthenticationResponse;
 import com.mw.KosherChat.views.TokensResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +29,6 @@ public class Oauth2CustomUserService {
     @Autowired
     OauthUsageRepository oauthUsageRepository;
 
-
     public Optional<Oauth2CustomUser> findBySub(String sub) {
         return oauth2Repository.findBySub(sub);
     }
@@ -36,11 +37,11 @@ public class Oauth2CustomUserService {
         return oauth2Repository.findByEmail(email);
     }
 
-    public Oauth2CustomUser saveOauth2User(Oauth2CustomUser oauth2CustomUser){
+    public Oauth2CustomUser saveOauth2User(Oauth2CustomUser oauth2CustomUser) {
         return oauth2Repository.save(oauth2CustomUser);
     }
 
-    public Oauth2AuthenticationResponse authenticate(JwtAuthenticationToken jwtAuthenticationToken) {
+    public ResponseEntity<Oauth2AuthenticationResponse> authenticate(JwtAuthenticationToken jwtAuthenticationToken) {
         Oauth2CustomUser oauth2UserFromToken = Oauth2CustomUser.from(jwtAuthenticationToken);
         Oauth2CustomUser oauth2CustomUser = findBySub(oauth2UserFromToken.getSub())
                 .orElseGet(() ->
@@ -49,29 +50,35 @@ public class Oauth2CustomUserService {
         return authenticate(oauth2CustomUser);
     }
 
-    public Oauth2AuthenticationResponse authenticate(Oauth2CustomUser oauth2User) {
+    public ResponseEntity<Oauth2AuthenticationResponse> authenticate(Oauth2CustomUser oauth2User) {
         //getting member
         String email = oauth2User.getEmail();
         ISSIdentity issIdentity = ISSIdentity.identityFor(oauth2User);
         Member member = memberRepository
                 .findByUsername(email)
-                .orElseGet(()->{
+                .orElseGet(() -> {
                     Member newMember = Member.from(oauth2User, issIdentity);
                     newMember = memberRepository.save(newMember);
                     return newMember;
                 });
 
         //getting tokens
-        TokensResponse tokens = tokenService.getTokens(member);
-        return Oauth2AuthenticationResponse
-                .builder()
-                .member(member)
-                .authorization(tokens)
-                .build();
+        TokensResponse tokensResponse = tokenService.getTokens(member);
+
+        Oauth2AuthenticationResponse oauthResponse =
+                Oauth2AuthenticationResponse
+                        .from(tokensResponse, member);
+
+        ResponseCookie resCookie = tokenService.refreshTokenAsCookie(tokensResponse.getRefresh_token());
+
+        return ResponseEntity
+                .ok()
+                .header("Set-Cookie", resCookie.toString())
+                .body(oauthResponse);
 
     }
 
-    public long getGoogleUserCount(){
+    public long getGoogleUserCount() {
         return oauthUsageRepository.countDistinctSub();
     }
 

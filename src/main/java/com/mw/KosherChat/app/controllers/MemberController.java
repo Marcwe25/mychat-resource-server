@@ -1,14 +1,20 @@
 package com.mw.KosherChat.app.controllers;
 
-import com.mw.KosherChat.app.model.*;
-import com.mw.KosherChat.app.modelView.*;
-import com.mw.KosherChat.app.services.*;
-import com.mw.KosherChat.model.ISSIdentity;
+import com.mw.KosherChat.app.model.Member;
+import com.mw.KosherChat.app.model.MemberRoom;
+import com.mw.KosherChat.app.model.Notification;
+import com.mw.KosherChat.app.model.Room;
+import com.mw.KosherChat.app.modelView.MemberDTO;
+import com.mw.KosherChat.app.modelView.NotificationDTO;
+import com.mw.KosherChat.app.modelView.NotificationsDTOList;
+import com.mw.KosherChat.app.modelView.RoomDTOMap;
+import com.mw.KosherChat.app.services.MemberRoomService;
+import com.mw.KosherChat.app.services.MemberService;
+import com.mw.KosherChat.app.services.NotificationService;
+import com.mw.KosherChat.app.services.RegisteredMember;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -26,32 +32,26 @@ public class MemberController {
     @GetMapping("/rooms")
     public RoomDTOMap getRoomsForUser(Authentication authentication) throws Exception {
         Member member = registeredMember.findRegisteredMember(authentication);
-        RoomDTOMap dtoMap = memberRoomService.getRoomsForUser(member.getId());
-        return dtoMap;
+        return memberRoomService.getRoomsForUser(member.getId());
     }
-    
+
     @GetMapping
-    public Member getRegisteredMember(Authentication authentication) throws Exception{
+    public Member getRegisteredMember(Authentication authentication) throws Exception {
         Member member = registeredMember.findRegisteredMember(authentication);
-        if(member==null) throw new Exception("could not find user as membere");
+        if (member == null) throw new Exception("could not find user as member");
         return member;
     }
 
 
     @PutMapping
     public MemberDTO updateMember(@RequestBody Member member, Authentication authentication) throws Exception {
-        Member updatedMember = memberService.updateMember(member,authentication);
+        Member updatedMember = memberService.updateMember(member, authentication);
         return MemberDTO.from(updatedMember);
     }
 
     @PutMapping("/unlink/{notificationId}")
-    public void unlinkFromRoom(@PathVariable(name = "notificationId") Long notificationId,  Authentication authentication) throws Exception {
+    public void unlinkFromRoom(@PathVariable(name = "notificationId") Long notificationId, Authentication authentication) throws Exception {
         Notification notification = memberRoomService.setUnlinked(notificationId, false, authentication);
-//        messagingTemplate.convertAndSendToUser(
-//                notification.getTo().getId().toString(),
-//                "/queue/contactDecline",
-//                NotificationDTO.from(notification)
-//        );
         messagingTemplate.convertAndSendToUser(
                 notification.getTo().getId().toString(),
                 "/queue/notification",
@@ -60,21 +60,18 @@ public class MemberController {
     }
 
     @PutMapping("/link/{roomId}")
-    public Room linkFromRoom(@PathVariable(name = "roomId") Long notificqationId, Authentication authentication) throws Exception {
-        MemberRoom memberRoom = memberRoomService.setLinked(notificqationId, true, authentication);
-        Room room = memberRoom.getRoom();
-        return room;
+    public Room linkFromRoom(@PathVariable(name = "roomId") Long notificationId, Authentication authentication) throws Exception {
+        MemberRoom memberRoom = memberRoomService.setLinked(notificationId, true, authentication);
+        return memberRoom.getRoom();
     }
 
     @GetMapping("/notifications")
     public NotificationsDTOList getNotifications(Authentication authentication) throws Exception {
-        NotificationsDTOList notificationsDTOList = notificationService.getNotifications(authentication);
-        return notificationsDTOList;
+        return notificationService.getNotifications(authentication);
     }
 
     @GetMapping("/friends")
-    public Map<Long,MemberDTO> getFriends( Authentication authentication) throws Exception {
-        Map<Long, MemberDTO> friends = memberService.getFriends(authentication);
-        return friends;
+    public Map<Long, MemberDTO> getFriends(Authentication authentication) throws Exception {
+        return memberService.getFriends(authentication);
     }
 }

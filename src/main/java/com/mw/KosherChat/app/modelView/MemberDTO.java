@@ -17,7 +17,7 @@ public class MemberDTO {
     public String iss;
 
     @Builder(builderMethodName = "memberBuilder")
-    public static MemberDTO from(Member member){
+    public static MemberDTO from(Member member) {
         return MemberDTO
                 .builder()
                 .id(member.getId())

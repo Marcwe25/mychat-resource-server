@@ -21,7 +21,7 @@ public class NotificationDTO {
     public boolean enable;
 
     @Builder
-    public static NotificationDTO from(Notification notification){
+    public static NotificationDTO from(Notification notification) {
         return NotificationDTO.builder()
                 .to(notification.getTo().getId())
                 .from(MemberDTO.from(notification.getFrom()))

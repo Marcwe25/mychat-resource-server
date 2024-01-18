@@ -9,9 +9,9 @@ import java.util.Map;
 @Builder
 @Data
 public class RoomDTOMap {
-    Map<Long,RoomDTO> rooms = new HashMap();
-    Map<Long,PostDTO> lastPosts = new HashMap();
-    Map<Long,Integer> unreads = new HashMap();
+    Map<Long, RoomDTO> rooms = new HashMap();
+    Map<Long, PostDTO> lastPosts = new HashMap();
+    Map<Long, Integer> unreads = new HashMap();
 
 
 }

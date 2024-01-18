@@ -5,6 +5,7 @@ import com.mw.KosherChat.views.Oauth2AuthenticationResponse;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,13 +17,14 @@ import java.util.Map;
 @RequestMapping("/api/v1/Oauth2/member")
 public class OAuth2Controler {
     Oauth2CustomUserService oauth2Service;
+
     @Autowired
     public OAuth2Controler(Oauth2CustomUserService oauth2CustomUserService) {
         this.oauth2Service = oauth2CustomUserService;
     }
 
     @GetMapping("/google")
-    public Oauth2AuthenticationResponse googleAuthentication(JwtAuthenticationToken authentication) {
+    public ResponseEntity<Oauth2AuthenticationResponse> googleAuthentication(JwtAuthenticationToken authentication) {
         return oauth2Service.authenticate(authentication);
     }
 

@@ -76,7 +76,6 @@ public class NotificationService {
     }
 
 
-
     public NotificationsDTOList getNotifications(Authentication authentication) throws Exception {
         Member member = registeredMember.findRegisteredMember(authentication);
         List<Notification> notifications = notificationRepository.findAllByTo(member);
@@ -84,11 +83,11 @@ public class NotificationService {
         return notificationsDTOList;
     }
 
-    public Optional<Notification> getById(long id){
+    public Optional<Notification> getById(long id) {
         return notificationRepository.findById(id);
     }
 
-    public Notification save(Notification notification){
+    public Notification save(Notification notification) {
         return notificationRepository.save(notification);
     }
 

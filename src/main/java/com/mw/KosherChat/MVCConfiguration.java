@@ -1,12 +1,6 @@
 package com.mw.KosherChat;
 
 import com.mw.KosherChat.services.UserDetailsService;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,10 +12,6 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -30,7 +20,7 @@ import java.security.interfaces.RSAPublicKey;
 
 @Configuration
 @RequiredArgsConstructor
-public class MVCConfiguration  implements WebMvcConfigurer {
+public class MVCConfiguration implements WebMvcConfigurer {
     @Value("${jwt.public.key}")
     RSAPublicKey key;
     @Value("${jwt.private.key}")
@@ -41,7 +31,7 @@ public class MVCConfiguration  implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("https://www.wewehappy.com","http://localhost:3000")
+                .allowedOrigins("https://www.wewehappy.com", "http://localhost:3000")
                 .allowedMethods("*")
                 .allowedHeaders("*")
                 .allowCredentials(true);
@@ -61,7 +51,7 @@ public class MVCConfiguration  implements WebMvcConfigurer {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
 
     }

@@ -21,7 +21,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Member{
+public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     public Long id;
@@ -34,28 +34,29 @@ public class Member{
 
     @Enumerated(EnumType.STRING)
     public ISSIdentity iss;
-    @OneToMany(mappedBy = "member",fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
     @JsonIgnore
     public Set<MemberRoom> memberRooms = new HashSet<>();
 
-    @OneToMany(mappedBy = "from",cascade=CascadeType.ALL,fetch = FetchType.LAZY)
-    @JsonIgnore public Set<Post> chatPosts = new HashSet<>();
+    @OneToMany(mappedBy = "from", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    public Set<Post> chatPosts = new HashSet<>();
 
     @ToString.Exclude
-    @OneToMany(mappedBy = "member",fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "member", fetch = FetchType.EAGER)
     private List<Token> tokens;
 
     boolean enabled = true;
 
     @Builder(builderMethodName = "modelBuilder")
-    public static Member from(User user){
+    public static Member from(User user) {
         return Member.builder()
                 .username(user.getEmail())
                 .build();
     }
 
     @Builder
-    public static Member from(RegisterRequest registerRequest){
+    public static Member from(RegisterRequest registerRequest) {
         return Member.builder()
                 .username(registerRequest.getEmail())
                 .displayName(registerRequest.getDisplayName())
@@ -67,7 +68,7 @@ public class Member{
     }
 
     @Builder(builderMethodName = "fromOauth2CustomUser")
-    public static Member from(Oauth2CustomUser oauth2CustomUser, ISSIdentity issIdentity){
+    public static Member from(Oauth2CustomUser oauth2CustomUser, ISSIdentity issIdentity) {
         return Member
                 .builder()
                 .username(oauth2CustomUser.getEmail())
@@ -94,11 +95,11 @@ public class Member{
         this.iss = iss;
     }
 
-    public void addMemberRoom(MemberRoom memberRoom){
+    public void addMemberRoom(MemberRoom memberRoom) {
         memberRooms.add(memberRoom);
     }
 
-    public void removeMemberRoom(MemberRoom memberRoom){
+    public void removeMemberRoom(MemberRoom memberRoom) {
         memberRooms.remove(memberRoom);
     }
 

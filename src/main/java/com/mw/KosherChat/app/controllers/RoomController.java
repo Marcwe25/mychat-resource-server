@@ -5,7 +5,10 @@ import com.mw.KosherChat.app.model.MemberRoom;
 import com.mw.KosherChat.app.model.Room;
 import com.mw.KosherChat.app.modelView.MemberRoomRequest;
 import com.mw.KosherChat.app.modelView.PostDTO;
-import com.mw.KosherChat.app.services.*;
+import com.mw.KosherChat.app.services.MemberRoomService;
+import com.mw.KosherChat.app.services.MemberService;
+import com.mw.KosherChat.app.services.RegisteredMember;
+import com.mw.KosherChat.app.services.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +31,7 @@ public class RoomController {
     private final MemberService memberService;
     private final MemberRoomService memberRoomService;
     private final RegisteredMember registeredMember;
+
     @PutMapping("/{roomId}")
     public void updateroom(@RequestParam long roomId, @RequestBody Room room) {
         room.setId(roomId);
@@ -41,7 +45,7 @@ public class RoomController {
             Room room = roomService.findRoomById(roomId);
             Member memberToAdd = memberService.findMemberByUsername(member.username);
 
-            memberRoomService.createMemberRoom(memberToAdd,room,false);
+            memberRoomService.createMemberRoom(memberToAdd, room, false);
         } catch (Exception e) {
             System.err.println("myerror");
             System.err.println(e);
@@ -58,8 +62,8 @@ public class RoomController {
                 Member memberToAdd = memberService.getMemberById(id);
                 members.add(memberToAdd);
             }
-            for(Member memberToAdd : members){
-                memberRoomService.createMemberRoom(memberToAdd,room,false);
+            for (Member memberToAdd : members) {
+                memberRoomService.createMemberRoom(memberToAdd, room, false);
 
             }
 
@@ -72,13 +76,13 @@ public class RoomController {
     }
 
     @PutMapping("/removeRoomsForMembers")
-    public void deleteMemberRooms( @RequestBody Set<Long> roomIds, Authentication authentication) throws Exception {
+    public void deleteMemberRooms(@RequestBody Set<Long> roomIds, Authentication authentication) throws Exception {
         Member member = registeredMember.findRegisteredMember(authentication);
-        memberRoomService.deleteMemberRooms(roomIds,member);
+        memberRoomService.deleteMemberRooms(roomIds, member);
     }
 
     @PutMapping("/editUsersInRoom/{roomId}")
-    public void editUsersInRoom(@PathVariable(name = "roomId") Long roomId, @RequestBody HashMap<Long,Boolean> ids) {
+    public void editUsersInRoom(@PathVariable(name = "roomId") Long roomId, @RequestBody HashMap<Long, Boolean> ids) {
         try {
             ids
                     .keySet()
@@ -86,11 +90,11 @@ public class RoomController {
                     .forEach(memberid -> {
                         boolean shouldBeEnable = ids.get(memberid);
                         MemberRoom memberRoom = memberRoomService.getByRoomAndByMember(roomId, memberid);
-                        if(memberRoom==null && shouldBeEnable){
+                        if (memberRoom == null && shouldBeEnable) {
                             Member member = memberService.getMemberById(memberid);
                             Room room = roomService.findRoomById(roomId);
-                            memberRoomService.createMemberRoom(member,room, true);
-                        } else if (memberRoom != null){
+                            memberRoomService.createMemberRoom(member, room, true);
+                        } else if (memberRoom != null) {
                             memberRoom.setDeleted(!shouldBeEnable);
                             memberRoom.setEnable(shouldBeEnable);
                             memberRoomService.save(memberRoom);
@@ -107,7 +111,7 @@ public class RoomController {
 
     @PostMapping
     public void newroom(@RequestBody MemberRoomRequest memberRoomRequest, Authentication authentication) throws Exception {
-        memberRoomService.process(memberRoomRequest,authentication);
+        memberRoomService.process(memberRoomRequest, authentication);
     }
 
     @GetMapping("/{roomId}")
@@ -118,13 +122,13 @@ public class RoomController {
 
     @GetMapping("/posts/{roomId}")
     public List<PostDTO> findTop10ByRoomIdOrderBydate_time(@PathVariable(name = "roomId") Long roomId, Authentication authentication) throws Exception {
-        memberRoomService.setLastSeen(roomId,authentication);
+        memberRoomService.setLastSeen(roomId, authentication);
         return roomService.getLast10PostsForRoom(roomId);
     }
 
     @PostMapping("/lastSeen/{roomId}")
     public ResponseEntity setLastSeen(@PathVariable(name = "roomId") Long roomId, Authentication authentication) throws Exception {
-        memberRoomService.setLastSeen(roomId,authentication);
+        memberRoomService.setLastSeen(roomId, authentication);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 

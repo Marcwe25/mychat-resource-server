@@ -2,7 +2,6 @@ package com.mw.KosherChat;
 
 import com.mw.KosherChat.services.TokenService;
 import jakarta.servlet.DispatcherType;
-import nonapi.io.github.classgraph.json.JSONUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ApplicationEventPublisher;
@@ -18,8 +17,6 @@ import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.messaging.simp.user.SimpUser;
-import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -41,16 +38,18 @@ import java.util.Optional;
 
 
 @Configuration
-@EnableWebSocketMessageBroker @Order(Ordered.HIGHEST_PRECEDENCE + 99)
+@EnableWebSocketMessageBroker
+@Order(Ordered.HIGHEST_PRECEDENCE + 99)
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Autowired
     TokenService tokenService;
     @Autowired
     private ApplicationEventPublisher context;
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic","/queue");
+        config.enableSimpleBroker("/topic", "/queue");
         config.setApplicationDestinationPrefixes("/app");
         config.setUserDestinationPrefix("/user");
     }
@@ -60,7 +59,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry
                 .addEndpoint("/chat-room-websocket")
-                .setAllowedOrigins("https://www.wewehappy.com","http://localhost:3000")
+                .setAllowedOrigins("https://www.wewehappy.com", "http://localhost:3000")
                 .withSockJS();
     }
 
@@ -74,17 +73,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         return registration;
     }
 
-    @Bean @Autowired
+    @Bean
+    @Autowired
     AuthorizationManager<Message<?>> authorizationManager(MessageMatcherDelegatingAuthorizationManager.Builder messages) {
         messages
-                .simpTypeMatchers(SimpMessageType.CONNECT,SimpMessageType.CONNECT_ACK).permitAll()
+                .simpTypeMatchers(SimpMessageType.CONNECT, SimpMessageType.CONNECT_ACK).permitAll()
                 .anyMessage().permitAll();
         return messages.build();
     }
 
 
     @Bean
-    public ChannelInterceptor authenticationInterceptor(){
+    public ChannelInterceptor authenticationInterceptor() {
         return new ChannelInterceptor() {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -110,11 +110,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         AuthorizationChannelInterceptor authz = new AuthorizationChannelInterceptor(myAuthorizationRules);
         AuthorizationEventPublisher publisher = new SpringAuthorizationEventPublisher(this.context);
         authz.setAuthorizationEventPublisher(publisher);
-        registration.interceptors(authenticationInterceptor(),new SecurityContextChannelInterceptor(), authz);
+        registration.interceptors(authenticationInterceptor(), new SecurityContextChannelInterceptor(), authz);
     }
 
     @Bean
-    public MessageMatcherDelegatingAuthorizationManager.Builder messageMatcherDelegatingAuthorizationManagerBuilder(){
+    public MessageMatcherDelegatingAuthorizationManager.Builder messageMatcherDelegatingAuthorizationManagerBuilder() {
         return new MessageMatcherDelegatingAuthorizationManager.Builder();
     }
 }

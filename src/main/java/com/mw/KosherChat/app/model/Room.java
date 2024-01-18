@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
 import java.util.Set;
+
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,27 +19,28 @@ public class Room {
     public Long id;
     public String name;
     @JsonIgnore
-    @OneToMany(mappedBy = "room", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "room", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     public Set<MemberRoom> memberRooms = new HashSet<>();
     @JsonIgnore
-    @OneToMany(mappedBy = "room",cascade=CascadeType.ALL,orphanRemoval = true)
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     public Set<Post> posts = new HashSet<>();
     public boolean enabled = true;
-    public void addPost(Post post){
+
+    public void addPost(Post post) {
         this.getPosts().add(post);
         post.setRoom(this);
     }
 
-    public void removePost(Post post){
+    public void removePost(Post post) {
         posts.remove(post);
         post.setRoom(null);
     }
 
-    public void addMemberRoom(MemberRoom memberRoom){
+    public void addMemberRoom(MemberRoom memberRoom) {
         memberRooms.add(memberRoom);
     }
 
-    public void removeMemberRoom(MemberRoom memberRoom){
+    public void removeMemberRoom(MemberRoom memberRoom) {
         memberRooms.remove(memberRoom);
         memberRoom.setRoom(null);
         memberRoom.setMember(null);

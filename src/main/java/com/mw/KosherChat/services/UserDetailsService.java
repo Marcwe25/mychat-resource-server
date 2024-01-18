@@ -4,14 +4,13 @@ package com.mw.KosherChat.services;
 import com.mw.KosherChat.model.User;
 import com.mw.KosherChat.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-public class UserDetailsService  implements org.springframework.security.core.userdetails.UserDetailsService {
+public class UserDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
 
     @Autowired
     UserRepository userRepository;
@@ -19,7 +18,7 @@ public class UserDetailsService  implements org.springframework.security.core.us
     @Override
     public User loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> optionalUser = userRepository.findByEmail(username);
-        if(optionalUser.isEmpty()) {
+        if (optionalUser.isEmpty()) {
             System.err.println("caused by: loadUserByUsername : user not found");
         }
         return optionalUser.orElse(null);
@@ -30,7 +29,7 @@ public class UserDetailsService  implements org.springframework.security.core.us
         return savedUser;
     }
 
-    public Long getId(String username){
+    public Long getId(String username) {
         return loadUserByUsername(username).getId();
     }
 

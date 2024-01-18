@@ -12,24 +12,25 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(uniqueConstraints = { @UniqueConstraint(columnNames = { "member_id", "room_id" }) })
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"member_id", "room_id"})})
 public class MemberRoom {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-                                        public long id;
+    public long id;
     @NotNull
     @ManyToOne
-    @JoinColumn(name="member_id")
-                                        public Member member;
+    @JoinColumn(name = "member_id")
+    public Member member;
     @NotNull
     @ManyToOne
-    @JoinColumn(name="room_id")
-                                        public Room room;
-                                        LocalDateTime lastSeen;
+    @JoinColumn(name = "room_id")
+    public Room room;
+    LocalDateTime lastSeen;
     @Column(columnDefinition = "boolean default false")
-                                        boolean enable;
+    boolean enable;
     @Column(columnDefinition = "boolean default false")
-                                        boolean deleted;
+    boolean deleted;
+
     public boolean isDeleted() {
         return deleted;
     }
@@ -68,24 +69,31 @@ public class MemberRoom {
     public void setMember(Member member) {
         this.member = member;
     }
+
     public void setRoom(Room room) {
         this.room = room;
     }
+
     public void setLastSeen(LocalDateTime lastSeen) {
         this.lastSeen = lastSeen;
     }
+
     public void setId(long id) {
         this.id = id;
     }
+
     public long getId() {
         return id;
     }
+
     public Member getMember() {
         return member;
     }
+
     public Room getRoom() {
         return room;
     }
+
     public LocalDateTime getLastSeen() {
         return lastSeen;
     }

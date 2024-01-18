@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -17,7 +18,7 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.AUTO)
     public Long id;
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name="member_id")
+    @JoinColumn(name = "member_id")
     public Member from;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

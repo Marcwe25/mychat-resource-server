@@ -4,7 +4,9 @@ import com.mw.KosherChat.app.model.*;
 import com.mw.KosherChat.app.modelView.NotificationDTO;
 import com.mw.KosherChat.app.modelView.NotificationToRoomDTO;
 import com.mw.KosherChat.app.modelView.PostDTO;
-import com.mw.KosherChat.app.services.*;
+import com.mw.KosherChat.app.services.MemberRoomService;
+import com.mw.KosherChat.app.services.RegisteredMember;
+import com.mw.KosherChat.app.services.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -34,10 +36,10 @@ public class PostController {
     }
 
     @MessageMapping("/request/{roomId}")
-    public void requestResponse(@DestinationVariable Long roomId, @Payload Boolean response, Authentication authentication) throws Exception{
-        if(response){
+    public void requestResponse(@DestinationVariable Long roomId, @Payload Boolean response, Authentication authentication) throws Exception {
+        if (response) {
             Member member = registeredMember.findRegisteredMember(authentication);
-            String postMessage = member.getUsername()+ " accepted, you're now connected";
+            String postMessage = member.getUsername() + " accepted, you're now connected";
             PostDTO postDTO = PostDTO
                     .builder()
                     .room(roomId)
@@ -48,8 +50,7 @@ public class PostController {
             MemberRoom memberRoom = memberRoomService.getByRoomAndByMember(roomId, member.getId());
             memberRoom.setEnable(true);
             messagingTemplate.convertAndSend("/topic/" + roomId, postDTO);
-        }
-        else {
+        } else {
             Member member = registeredMember.findRegisteredMember(authentication);
             String postMessage = member.getUsername() + " declined, you're not connected";
             PostDTO postDTO = PostDTO
@@ -64,6 +65,7 @@ public class PostController {
             messagingTemplate.convertAndSend("/topic/" + roomId, postDTO);
         }
     }
+
     @MessageMapping("/{roomId}incoming")
     public void newMessageNothification(@DestinationVariable Long roomId, @Payload Post post) {
         roomService.addPostToRoom(roomId, post);

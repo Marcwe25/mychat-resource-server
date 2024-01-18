@@ -40,19 +40,18 @@ public class RoomService {
     }
 
 
-
     public List<Room> createRoom(List<Room> Rooms) {
         List<Room> unsaved = new ArrayList<>();
-        for(Room Room : Rooms){
+        for (Room Room : Rooms) {
             roomRepository.save(Room);
         }
         return unsaved;
     }
+
     public Room saveRoom(Room Room) {
 
         return roomRepository.save(Room);
     }
-
 
 
     public Room findRoomById(Long id) {
@@ -65,15 +64,16 @@ public class RoomService {
         return postRepository.save(Post);
     }
 
-    public boolean disableRoom(long roomId){
+    public boolean disableRoom(long roomId) {
         Room Room;
         Room = roomRepository.findById(roomId).orElseThrow();
         Room.setEnabled(false);
         roomRepository.save(Room);
         return true;
     }
+
     @Transactional
-    public boolean addPostToRoom(Long roomId, Post post){
+    public boolean addPostToRoom(Long roomId, Post post) {
         Member member = memberRepository.findByUsername(post.getFrom().getUsername()).orElseThrow();
         Room room = roomRepository.findById(roomId).orElseThrow();
         post.setRoom(room);
@@ -82,12 +82,12 @@ public class RoomService {
         return true;
     }
 
-    public List<PostDTO> getLast10PostsForRoom(long roomId){
+    public List<PostDTO> getLast10PostsForRoom(long roomId) {
         Sort sort = Sort.by("dateTime").descending();
         return postRepository
-                .findPostByRoomId(roomId,sort)
+                .findPostByRoomId(roomId, sort)
                 .stream()
-                .map(p->PostDTO.fromPost(p))
+                .map(p -> PostDTO.fromPost(p))
                 .collect(Collectors.toList());
     }
 

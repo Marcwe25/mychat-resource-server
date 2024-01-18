@@ -49,7 +49,7 @@ public class MemberRoomService {
         this.registeredMember = registeredMember;
     }
 
-    public void process(MemberRoomRequest memberRoomRequest, Authentication authentication ) throws Exception {
+    public void process(MemberRoomRequest memberRoomRequest, Authentication authentication) throws Exception {
 
         Member member = registeredMember.findRegisteredMember(authentication);
 
@@ -84,21 +84,22 @@ public class MemberRoomService {
         notificationService.newNotificationAndSend(memberRoomRequest, to);
     }
 
-    public MemberRoom getBymemberRoomId(Long memberRoomId){
+    public MemberRoom getBymemberRoomId(Long memberRoomId) {
         return memberRoomRepository.findById(memberRoomId).orElse(null);
     }
 
-    public void disableMemberRooms(Set<Long> roomIds,Member registeredMember){
-        for(Long roomId : roomIds){
-            memberRoomRepository.disableMemberRooms(registeredMember.getId(),roomId);
+    public void disableMemberRooms(Set<Long> roomIds, Member registeredMember) {
+        for (Long roomId : roomIds) {
+            memberRoomRepository.disableMemberRooms(registeredMember.getId(), roomId);
         }
     }
 
-    public void deleteMemberRooms(Set<Long> roomIds,Member registeredMember){
-        for(Long roomId : roomIds){
-            memberRoomRepository.deleteMemberRooms(registeredMember.getId(),roomId);
+    public void deleteMemberRooms(Set<Long> roomIds, Member registeredMember) {
+        for (Long roomId : roomIds) {
+            memberRoomRepository.deleteMemberRooms(registeredMember.getId(), roomId);
         }
     }
+
     public MemberRoom getMemberRoom(Member member, Room room) {
         MemberRoom memberRoom = MemberRoom
                 .builder()
@@ -140,7 +141,7 @@ public class MemberRoomService {
     }
 
     public boolean setLastSeen(long roomId, Authentication authentication) throws Exception {
-        MemberRoom memberRoom = getMemberRoomForRegisteredUser(roomId,authentication);
+        MemberRoom memberRoom = getMemberRoomForRegisteredUser(roomId, authentication);
         memberRoom.setLastSeen(LocalDateTime.now());
         memberRoomRepository.save(memberRoom);
         return true;
@@ -174,12 +175,12 @@ public class MemberRoomService {
 
         Map<Long, RoomDTO> roomDTOs =
                 memberRoomRepository
-                        .findByMemberIdAndDeleted(registeredUserId,false)
+                        .findByMemberIdAndDeleted(registeredUserId, false)
                         .parallelStream()
                         .peek(mr -> lastSeen.putIfAbsent(mr.getRoom().getId(), mr.getLastSeen()))
                         .map(mr -> mr.getRoom().getId())
                         .peek(roomId -> lastPostsDTO.putIfAbsent(
-                                roomId,PostDTO.fromPost(
+                                roomId, PostDTO.fromPost(
                                         postRepository
                                                 .findFirstByRoomOrderByDateTimeDesc(
                                                         roomRepository.getReferenceById(roomId)
@@ -188,7 +189,7 @@ public class MemberRoomService {
                         .peek(roomId -> unreads
                                 .putIfAbsent(roomId,
                                         postRepository
-                                        .countByRoomIdAndDateTimeIsAfter(roomId, lastSeen.get(roomId))
+                                                .countByRoomIdAndDateTimeIsAfter(roomId, lastSeen.get(roomId))
                                 )
                         )
                         .collect(Collectors.toMap(Function.identity(),
@@ -206,8 +207,8 @@ public class MemberRoomService {
                                                             .toList())
                                                     .enabled(
                                                             memberRooms.stream()
-                                                                    .filter(m->m.getMember().getId()!=registeredUserId)
-                                                                    .anyMatch(m->m.isEnable())
+                                                                    .filter(m -> m.getMember().getId() != registeredUserId)
+                                                                    .anyMatch(m -> m.isEnable())
                                                     )
                                                     .build();
                                         }
@@ -222,7 +223,7 @@ public class MemberRoomService {
                 .build();
     }
 
-    public MemberRoom setLinked(long notificqationId, boolean isLinked,  Authentication authentication) throws Exception {
+    public MemberRoom setLinked(long notificqationId, boolean isLinked, Authentication authentication) throws Exception {
         Optional<Notification> opNotification = notificationRepository.findById(notificqationId);
         Notification notification = opNotification.get();
         NotificationType type = notification.getType();
@@ -239,7 +240,7 @@ public class MemberRoomService {
             memberRoomRepository
                     .findByRoomId(memberRoom.getRoom().getId())
                     .parallelStream()
-                    .filter(mr -> mr.getMember().getId()==member.getId())
+                    .filter(mr -> mr.getMember().getId() == member.getId())
                     .forEach(mr -> {
                         Notification n = Notification.builder()
                                 .to(mr.getMember())
@@ -263,7 +264,7 @@ public class MemberRoomService {
         return null;
     }
 
-    public Notification setUnlinked(long notificationId, boolean isLinked,  Authentication authentication) throws Exception {
+    public Notification setUnlinked(long notificationId, boolean isLinked, Authentication authentication) throws Exception {
         Notification notification = notificationRepository.findById(notificationId).orElseThrow();
         NotificationType type = notification.getType();
         if (type == NotificationType.NewContact) {
@@ -276,7 +277,7 @@ public class MemberRoomService {
 
             Member responseToMember = notification.getFrom();
             Room room = memberRoom.getRoom();
-            MemberRoom responseMemberRoom = memberRoomRepository.findByRoomAndMember(room,responseToMember);
+            MemberRoom responseMemberRoom = memberRoomRepository.findByRoomAndMember(room, responseToMember);
             responseMemberRoom.setEnable(false);
             responseMemberRoom.setDeleted(true);
             save(responseMemberRoom);

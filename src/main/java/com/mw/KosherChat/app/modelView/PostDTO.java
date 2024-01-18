@@ -20,8 +20,8 @@ public class PostDTO {
     public NotificationType type;
 
     @Builder(builderMethodName = "PostBuilder")
-    public static PostDTO fromPost(Post post){
-        if(post==null) return null;
+    public static PostDTO fromPost(Post post) {
+        if (post == null) return null;
         return PostDTO
                 .builder()
                 .id(post.getId())

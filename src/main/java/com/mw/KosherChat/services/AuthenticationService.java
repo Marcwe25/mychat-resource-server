@@ -11,14 +11,13 @@ import com.mw.KosherChat.views.TokensResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,17 +32,22 @@ public class AuthenticationService {
     PasswordEncoder passwordEncoder;
     @Autowired
     MemberService memberService;
-    @Autowired
-    Oauth2CustomUserService oauth2CustomUserService;
 
-    public TokensResponse refreshToken(String tokenValue) throws Exception {
+    public ResponseEntity<TokensResponse> refreshToken(String tokenValue) throws Exception {
         Token token = tokenService.findByToken(tokenValue).orElseThrow();
         Member member = tokenService.getMember(token);
-        if(member!=null) {tokenService.revokeAllUserTokens(member);}
-        return tokenService.getTokens(member);
+        if (member != null) {
+            tokenService.revokeAllUserTokens(member);
+        }
+        TokensResponse tokensResponse = tokenService.getTokens(member);
+        ResponseCookie resCookie = tokenService.refreshTokenAsCookie(tokensResponse.getRefresh_token());
+        return ResponseEntity
+                .ok()
+                .header("Set-Cookie", resCookie.toString())
+                .body(tokensResponse);
     }
 
-    public TokensResponse authenticate(AuthenticationRequest authenticationRequest) {
+    public ResponseEntity<TokensResponse> authenticate(AuthenticationRequest authenticationRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         authenticationRequest.getUsername(),
@@ -51,11 +55,16 @@ public class AuthenticationService {
                 )
         );
         Member member = memberService.findMemberByUsername(authentication.getName());
-        return tokenService.getTokens(member);
+        TokensResponse tokensResponse = tokenService.getTokens(member);
+        ResponseCookie resCookie = tokenService.refreshTokenAsCookie(tokensResponse.getRefresh_token());
+        return ResponseEntity
+                .ok()
+                .header("Set-Cookie", resCookie.toString())
+                .body(tokensResponse);
     }
 
     public void register(RegisterRequest request) {
-        if(validate(request));
+        if (validate(request)) ;
         request.setEmail(cleanString(request.getEmail()));
         request.setDisplayName(cleanString(request.getDisplayName()));
         request.setGiven_name(cleanString(request.getGiven_name()));
@@ -67,12 +76,13 @@ public class AuthenticationService {
         User user = User.from(request);
         userDetailsService.saveUser(user);
     }
-    public Boolean validate(RegisterRequest request){
+
+    public Boolean validate(RegisterRequest request) {
         User userFetched = userDetailsService.loadUserByUsername(request.getEmail());
-        if(userFetched==null) {
+        if (userFetched == null) {
             return false;
         }
-        if(request.getRole()==null) {
+        if (request.getRole() == null) {
             request.setRole(Role.USER);
         }
         return true;
@@ -90,5 +100,6 @@ public class AuthenticationService {
         // Remove invisible control characters and unused code points
         return trimmedInput.replaceAll("\\p{C}", "");
     }
+
 
 }

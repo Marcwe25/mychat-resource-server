@@ -18,19 +18,20 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @NoArgsConstructor
 public class NotificationsDTOList {
-    Map<NotificationType,List<NotificationDTO>> notifications;
+    Map<NotificationType, List<NotificationDTO>> notifications;
     List notificationType;
+
     @Builder(builderMethodName = "grouped")
-    public static NotificationsDTOList fromNotifications(List<Notification> notifications){
+    public static NotificationsDTOList fromNotifications(List<Notification> notifications) {
         return NotificationsDTOList
                 .builder()
                 .notifications(
                         notifications
                                 .stream()
-                                .filter(not->not.isEnable()==true)
+                                .filter(not -> not.isEnable())
                                 .map(not -> NotificationDTO.from(not))
                                 .collect(Collectors.groupingBy(
-                                o -> ((NotificationDTO) o).getType())))
+                                        o -> o.getType())))
                 .notificationType(Arrays.asList(NotificationType.values()))
                 .build();
     }
