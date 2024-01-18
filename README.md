@@ -21,7 +21,7 @@ The Chat App Resource Server is a component of the Chat App project that serves 
 1. Clone this repository to your local machine:
 
    ```shell
-   git clone https://github.com/your-username/mychat-resource-server.git
+   git clone https://github.com/Marcwe25/mychat-resource-server.git
    ```
 2. Navigate to the project directory:
 
