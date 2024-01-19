@@ -1,5 +1,6 @@
 package com.mw.KosherChat.app.modelView;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mw.KosherChat.app.model.NotificationType;
 import com.mw.KosherChat.app.model.Post;
 import lombok.Builder;
@@ -14,6 +15,7 @@ public class PostDTO {
     private Long id;
     public long from;
     public long room;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     public LocalDateTime dateTime;
     public String content;
     public boolean enabled = true;

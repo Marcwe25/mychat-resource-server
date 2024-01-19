@@ -29,7 +29,6 @@ import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthen
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.util.HashMap;
@@ -74,7 +73,6 @@ public class SecurityConfig {
                 .csrf((csrf) -> csrf.disable())
                 .authorizeHttpRequests((authorize) ->
                                 authorize
-//                                .requestMatchers("/api/v1/auth/**").permitAll()
                                         .requestMatchers("/chat-room-websocket/**").permitAll()
                                         .anyRequest().authenticated()
                 )
