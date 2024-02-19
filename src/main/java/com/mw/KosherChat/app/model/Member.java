@@ -63,7 +63,7 @@ public class Member {
                 .family_name(registerRequest.getFamily_name())
                 .given_name(registerRequest.getGiven_name())
                 .iss(ISSIdentity.KCHAT)
-                .enabled(true)
+                .enabled(false)
                 .build();
     }
 

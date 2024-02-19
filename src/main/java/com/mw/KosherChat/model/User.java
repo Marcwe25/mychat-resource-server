@@ -1,6 +1,6 @@
 package com.mw.KosherChat.model;
 
-import com.mw.KosherChat.views.RegisterRequest;
+import com.mw.KosherChat.views.VerificationRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,9 +25,10 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String email;
     private String password;
-
+    private Boolean enabled;
     @Enumerated(EnumType.STRING)
     private Role role;
+    private Boolean validated;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -43,50 +44,52 @@ public class User implements UserDetails {
     }
 
     @Builder
-    public static User from(RegisterRequest registerRequest) {
+    public static User from(VerificationRequest verificationRequest, Boolean validated) {
         return User.builder()
-                .email(registerRequest.getEmail())
-                .password(registerRequest.getPassword())
-                .role(Role.USER)
+                .email(verificationRequest.getEmail())
+                .password(verificationRequest.getPassword())
+                .role(Role.NEED_TO_VALIDATE)
+                .enabled(true)
+                .validated(validated)
                 .build();
     }
-
     public Long getId() {
         return id;
     }
-
     public void setId(Long id) {
         this.id = id;
     }
-
     @Override
     public String getPassword() {
         return password;
     }
-
     @Override
     public String getUsername() {
         return email;
     }
-
     @Override
     public boolean isAccountNonExpired() {
         return true;
     }
-
     @Override
     public boolean isAccountNonLocked() {
         return true;
     }
-
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }
-
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled ;
+    }
+
+    public Boolean getValidated() {
+        return validated;
+    }
+
+    public void setValidated(Boolean validated) {
+        this.validated = validated;
     }
 
     @Override

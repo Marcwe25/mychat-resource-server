@@ -55,7 +55,7 @@ public class MemberRoomService {
 
         if (member.getUsername() == memberRoomRequest.getTo())
             throw new Exception(member.username);
-        Member withMember = memberService.findMemberByUsername(memberRoomRequest.getTo());
+        Member withMember = memberService.findMemberByUsername(memberRoomRequest.getTo()).orElseThrow();
         Room room = new Room();
         MemberRoom from = MemberRoom.builder()
                 .member(member)
