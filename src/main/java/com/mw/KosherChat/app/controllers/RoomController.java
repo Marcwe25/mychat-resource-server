@@ -16,10 +16,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/v1/room")
@@ -43,8 +40,7 @@ public class RoomController {
 
         try {
             Room room = roomService.findRoomById(roomId);
-            Member memberToAdd = memberService.findMemberByUsername(member.username);
-
+            Member memberToAdd = memberService.findMemberByUsername(member.username).orElseThrow();
             memberRoomService.createMemberRoom(memberToAdd, room, false);
         } catch (Exception e) {
             System.err.println("myerror");

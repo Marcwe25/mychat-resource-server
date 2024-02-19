@@ -24,6 +24,11 @@ public class UserDetailsService implements org.springframework.security.core.use
         return optionalUser.orElse(null);
     }
 
+    public Boolean userExist(String username) throws UsernameNotFoundException {
+        Optional<User> optionalUser = userRepository.findByEmail(username);
+        return optionalUser.isPresent();
+    }
+
     public User saveUser(User user) {
         User savedUser = userRepository.save(user);
         return savedUser;

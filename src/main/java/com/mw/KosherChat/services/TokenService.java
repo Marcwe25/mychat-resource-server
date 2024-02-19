@@ -5,6 +5,7 @@ import com.mw.KosherChat.app.model.Member;
 import com.mw.KosherChat.app.repositories.MemberRepository;
 import com.mw.KosherChat.app.services.RegisteredMember;
 import com.mw.KosherChat.model.ISSIdentity;
+import com.mw.KosherChat.model.Role;
 import com.mw.KosherChat.model.Token;
 import com.mw.KosherChat.repository.TokenRepository;
 import com.mw.KosherChat.views.TokensResponse;
@@ -25,6 +26,7 @@ import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +38,8 @@ public class TokenService {
     long access_expire;
     @Value("${jwt.refresh-token.expiration}")
     long refresh_expire;
+    @Value("${jwt.verify-token.expiration}")
+    long verify_expire;
     RSAPrivateKey privateKey;
     RSAPublicKey publicKey;
     TokenRepository tokenRepository;
@@ -61,9 +65,6 @@ public class TokenService {
         this.memberRepository = memberRepository;
         this.jwtAuthenticationConverter = jwtAuthenticationConverter;
         this.registeredMember = registeredMember;
-        System.out.println("--------------access_expire-------" + access_expire);
-        System.out.println("--------------refresh_expire------" + refresh_expire);
-
     }
 
     public void revokeAllUserTokens(Member member) {
@@ -88,21 +89,41 @@ public class TokenService {
     }
 
     public Member getMember(Token token) throws Exception {
-        if (token == null) throw new Exception();
-        String cleanedToken = token.getTokenValue();
-        Jwt jwt = getJwt(cleanedToken);
-
-        //validation
-        String id = jwt.getId();
-        Token referenceById = tokenRepository.getReferenceById(id);
-        if (referenceById == null) throw new JwtException("token exception");
-        if (jwt.getExpiresAt().isBefore(Instant.now())) throw new JwtException("token expired");
-        if (token.revoked) throw new JwtException("token revoked");
+        Jwt jwt = validateToken(token);
         String token_userId = jwt.getSubject();
         String iss = jwt.getClaimAsString("iss");
 
         Member member = registeredMember.findRegisteredMember(token_userId, ISSIdentity.valueOf(iss));
         return member;
+    }
+
+    public String getVerificationTokenEmail(Token token) throws Exception {
+        Jwt jwt = validateToken(token);
+        String verificationTokenEmail = jwt.getSubject();
+        return verificationTokenEmail;
+    }
+
+    Jwt validateToken(Token token) throws Exception {
+        if (token == null) throw new Exception();
+        Jwt jwt = getJwt(token.getTokenValue());
+        String id = jwt.getId();
+        Token referenceById = tokenRepository.getReferenceById(id);
+        if (referenceById == null) throw new JwtException("token exception");
+        if (jwt.getExpiresAt().isBefore(Instant.now())) throw new JwtException("token expired");
+        if (token.revoked) throw new JwtException("token revoked");
+        return jwt;
+    }
+
+
+    public void verifyVerificationToken(Token token) throws Exception {
+        Jwt jwt = validateToken(token);
+
+    }
+
+    public String getEmail(String token){
+        Jwt jwt = getJwt(token);
+        String email = jwt.getClaimAsString("email");
+        return email;
     }
 
     public Jwt getJwt(String token) {
@@ -136,21 +157,40 @@ public class TokenService {
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(access_expire))
                 .subject(memberId)
-                .claim("scope", "ROLE_USER")
+                .claim("scope", Role.USER.getAuthority())
                 .build();
     }
 
     public JwtClaimsSet getRefreshTokenClaims(String memberId) {
-
         String jti = getNewJTI();
         return JwtClaimsSet.builder()
                 .id(jti)
                 .issuer(ISSIdentity.KCHAT.toString())
                 .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plusSeconds(refresh_expire * 60))
+                .expiresAt(Instant.now().plus(refresh_expire,ChronoUnit.MINUTES))
                 .subject(memberId)
-                .claim("scope", "ROLE_USER")
+                .claim("scope", Role.USER.getAuthority())
                 .build();
+    }
+
+    public JwtClaimsSet getVerificationClaims(Member member) {
+        String jti = getNewJTI();
+        JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
+                .id(jti)
+                .issuer(ISSIdentity.KCHAT.toString())
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plus(verify_expire ,ChronoUnit.MINUTES))
+                .subject(member.getId().toString())
+                .claim("email",member.username)
+                .claim("scope", Role.NEED_TO_VALIDATE.getAuthority())
+                .build();
+        return jwtClaimsSet;
+    }
+
+    public Jwt getVerificationToken(Member member){
+        JwtClaimsSet verificationToken = getVerificationClaims(member);
+        Jwt jwt = getJwt(verificationToken);
+        return jwt;
     }
 
     public TokensResponse getTokens(Member member) {
@@ -172,14 +212,9 @@ public class TokenService {
     }
 
     public Jwt getJwt(JwtClaimsSet claims) {
-
         Jwt jwt = this.selfJwtEncoder.encode(JwtEncoderParameters.from(claims));
-        try {
-            Token token = Token.from(jwt);
-            tokenRepository.save(token);
-
-        } catch (Exception e) {
-        }
+        Token token = Token.from(jwt);
+        tokenRepository.save(token);
         return jwt;
     }
 

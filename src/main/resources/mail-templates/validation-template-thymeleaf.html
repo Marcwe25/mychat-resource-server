@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Verification</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+<p th:text="'Dear ' + ${user}">Dear user</p>
+
+<p>Welcome to <a href="http://www.wewehappy.com" target="_blank">wewehappy.com</a>! We're excited to have you join our community. Before you dive in, we need to verify your email address to complete your registration.</p>
+
+<p>Please <a th:href="@{https://www.wewehappy.com(verification=${token})}" target="_blank">click here</a> to verify your email address.</p>
+
+<p>By verifying your email, you'll gain full access to all the features and benefits wewehappy has to offer.</p>
+
+<p>If you did not initiate this registration, no further action is required from your side, and you can safely disregard this email.</p>
+
+<p>Need help? If you have any questions or encounter any problems during the verification process, please do not hesitate to contact our support team at <a href="mailto:postmaster@wewehappy.com">postmaster@wewehappy.com</a> or visit our Help Center.</p>
+
+<p>Thank you for joining wewehappy. We're thrilled to welcome you aboard!</p>
+<p>Warm regards,</p>
+
+<p>The wewehappy Team</p>
+</body>
+</html>
+
+

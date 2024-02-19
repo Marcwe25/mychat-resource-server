@@ -43,18 +43,21 @@ public class MemberService {
         return memberRepository.findById(id).orElse(null);
     }
 
-    public Member findMemberByUsername(String username) {
-        Member member = memberRepository.findByUsername(username).orElseThrow();
-        return member;
+    public Optional<Member> findMemberByUsername(String username) {
+        return memberRepository.findByUsername(username);
+//        Member member = memberRepository.findByUsername(username).orElseThrow();
+//        return member;
     }
 
-    public Member getOrSaveMemberByUsername(String username) {
-        Member member = findMemberByUsername(username);
-        if (member == null) {
-            member = Member.builder().username(username).build();
-            memberRepository.save(member);
-        }
-        return member;
+    public Member getOrNewMemberByUsername(String username) {
+        return findMemberByUsername(username)
+                        .orElseGet(
+                                () ->  memberRepository.save(
+                                        Member
+                                                .builder()
+                                                .username(username)
+                                                .build())
+                        );
     }
 
     public Member updateMember(Member memberUpdates, Authentication authentication) throws Exception {
