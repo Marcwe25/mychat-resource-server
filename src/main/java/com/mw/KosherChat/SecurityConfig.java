@@ -71,10 +71,8 @@ public class SecurityConfig {
                 .csrf((csrf) -> csrf.disable())
                 .authorizeHttpRequests((authorize) ->
                                 authorize
-                                        .requestMatchers(
-                                                "/chat-room-websocket/**",
-                                                "/api/v1/Oauth2/member/**"
-                                                ).permitAll()
+                                        .requestMatchers("/chat-room-websocket/**").permitAll()
+                                        .requestMatchers("/api/v1/Oauth2/member/**").authenticated()
                                         .anyRequest().hasAnyAuthority("SCOPE_ROLE_USER")
                 )
                 .oauth2ResourceServer((oauth2) -> oauth2
